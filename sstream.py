@@ -36,8 +36,8 @@ class SStream(wx.Frame):
         self.newest_row = 1
         self.grid = wx.grid.Grid(self.panel)
         self.grid.CreateGrid(self.newest_row,8)
-        self.panel.color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
-        self.grid.SetDefaultCellBackgroundColour(self.panel.color)
+        #self.panel.color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
+        self.grid.SetBackgroundColour("Pink")
         self.grid.SetColLabelValue(0, "Symbol")
         self.grid.SetColLabelValue(1, "Last")
         self.grid.SetColLabelValue(2, "Net Chg")
@@ -102,10 +102,7 @@ class SStream(wx.Frame):
         self.grid.SetCellValue(row, 6, str(open))
         self.grid.SetCellValue(row, 7, str(prev_close))
         while 1:
-            time.sleep(1)
-            self.grid.SetCellBackgroundColour(row,1,"Grey")
-            time.sleep(4)
-            
+            time.sleep(5)
             # set value for the latest quote
             prev_quote = float(self.grid.GetCellValue(row,1))
             delta = random.randrange(-10,10,1)
