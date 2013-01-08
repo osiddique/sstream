@@ -3,7 +3,7 @@ import wx.grid
 import time
 import datetime
 import thread
-#import ystockquote
+import ystockquote
 
 #import matplotlib
 #matplotlib.use('WXAgg')
@@ -11,8 +11,6 @@ import thread
 #from matplotlib.backends.backend_wxagg import \
 #    FigureCanvasWxAgg as FigCanvas, \
 #    NavigationToolbar2WxAgg as NavigationToolbar
-
-import random # debug
 
 class SStream(wx.Frame):   
     def __init__(self):
@@ -36,8 +34,6 @@ class SStream(wx.Frame):
         self.newest_row = 1
         self.grid = wx.grid.Grid(self.panel)
         self.grid.CreateGrid(self.newest_row,8)
-        #self.panel.color = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNFACE)
-        self.grid.SetBackgroundColour("Pink")
         self.grid.SetColLabelValue(0, "Symbol")
         self.grid.SetColLabelValue(1, "Last")
         self.grid.SetColLabelValue(2, "Net Chg")
@@ -68,93 +64,71 @@ class SStream(wx.Frame):
         self.panel.SetSizer(main_sizer)
         
         # display date/time and then start a thread to handle updates
-        self.DisplayDateTime()
         thread.start_new_thread(self.UpdateDateTime,())
         
         # start getting quotes for AAPL by default
-        self.grid.SetCellValue(0, 0, "AAPL")
+        #self.grid.SetCellValue(0, 0, "AAPL")
         thread.start_new_thread(self.QuoteHandler,('AAPL',0))
        
     def OnAdd(self,event): 
-        self.AddRow()
-        
-    def AddRow(self):
         # add a row to grid
         self.grid.AppendRows(1)
         self.newest_row += 1   
-        # get parameters to pass to QuoteHandler
-        row = self.newest_row - 1
-        symbol = self.txt_box.GetValue().upper()
+        # start a thread
+        thread.start_new_thread(self.QuoteHandler,(self.txt_box.GetValue().upper(),self.newest_row-1)) 
         # clear the text box
         self.txt_box.Clear()
         self.txt_box.SetFocus()
         
-        # start the thread
-        thread.start_new_thread(self.QuoteHandler,(symbol,row))
-        
     def QuoteHandler(self,symbol,row):
         self.grid.SetCellValue(row, 0, symbol)
-        prev_close = 100.00
-        delta = random.randrange(-10,10,1)
-        delta = float(delta)/100
-        open = prev_close + delta
-        self.grid.SetCellValue(row, 1, str(open))
-        self.grid.SetCellValue(row, 6, str(open))
-        self.grid.SetCellValue(row, 7, str(prev_close))
+        # get initial price
+        quote = float(ystockquote.get_price(symbol))
         while 1:
-            time.sleep(5)
-            # set value for the latest quote
-            prev_quote = float(self.grid.GetCellValue(row,1))
-            delta = random.randrange(-10,10,1)
-            delta = float(delta)/100
-            quote = prev_quote + delta
-            # set value for net change
-            net_change = quote - prev_close
+            # set value for the last quote to get momentum
+            prev_quote = quote 
+
+            #get data
+            stock_data = ystockquote.get_all(symbol)
             
             # write value of latest quote
-            if quote >= prev_quote:
-                self.grid.SetCellBackgroundColour(row,1,"Green")
-            else:
-                self.grid.SetCellBackgroundColour(row,1,"Red")
-            self.grid.SetCellValue(row,1,str(quote))
-            # write value of net change
-            if net_change >= 0.0:
-                self.grid.SetCellBackgroundColour(row,2,"Green")
-                sign = '+'
-            else:
-                self.grid.SetCellBackgroundColour(row,2,"Red")
-                sign = ''
-            self.grid.SetCellValue(row,2,sign + str(net_change))
+            quote = stock_data['price']
+            self.grid.SetCellValue(row,1,quote)
+            (float(quote) > float(prev_quote) and (True,self.grid.SetCellBackgroundColour(row,1,"Green"))) \
+            or (float(quote) < float(prev_quote) and self.grid.SetCellBackgroundColour(row,1,"Red"))
             
+            # write value of net change
+            self.grid.SetCellValue(row,2,stock_data['change'])
+            (float(stock_data['change']) > 0.0 and (True,self.grid.SetCellBackgroundColour(row,2,"Green"))) \
+            or (float(stock_data['change']) < 0.0 and self.grid.SetCellBackgroundColour(row,2,"Red"))
+            
+            # write value of volume
+            self.grid.SetCellValue(row,5,stock_data['volume'])
+            
+            # write prev close
+            prev_close = float(quote) - float(stock_data['change'])
+            self.grid.SetCellValue(row,7,str(prev_close))
+            
+            # wait
+            time.sleep(1)
+            self.grid.SetCellBackgroundColour(row,1,"White")
+            self.grid.ForceRefresh()
+            time.sleep(2)
+    
     def UpdateDateTime(self):
         while 1:
-            time.sleep(1)
-            self.DisplayDateTime()
-            
-    def DisplayDateTime(self):
-        now = datetime.datetime.now()
-        # format the time
-        if now.hour < 10:
-            str_hour = ' ' + str(now.hour)
-        else:
-            str_hour = str(now.hour)
-        if now.minute < 10:
-            str_minute = '0' + str(now.minute)
-        else:
-            str_minute = str(now.minute)
-        if now.second < 10:
-            str_second = '0' + str(now.second)
-        else:
-            str_second = str(now.second)
-        if now.hour >= 12:
-            am_pm = 'PM'
-        else:
-            am_pm = 'AM'
-        current_time = str_hour + ':' + str_minute + ':' + str_second + ' ' + am_pm
-        # update the date and time
-        self.time_display.SetValue(current_time)
-        self.date_display.SetValue(str(datetime.date.today()))
-        
+           now = datetime.datetime.now()
+           format_time = lambda x, c: (x < 10 and (c + str(x), True)) or (str(x), False)
+           str_hour = format_time(now.hour,' ')[0]
+           str_minute = format_time(now.minute,'0')[0]
+           str_second = format_time(now.second,'0')[0]
+           am_pm = ((now.hour >= 12 and ('PM',True)) or ('AM',False))[0]
+           # update the date and time
+           self.time_display.SetValue(str_hour + ':' + str_minute + ':' + str_second + ' ' + am_pm)
+           self.date_display.SetValue(str(datetime.date.today()))
+           # wait       
+           time.sleep(1)       
+    
     def ChartHistoricPrices(self, event):
         pass
         #if event.GetCol() == 0:
