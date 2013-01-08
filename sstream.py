@@ -67,7 +67,6 @@ class SStream(wx.Frame):
         thread.start_new_thread(self.UpdateDateTime,())
         
         # start getting quotes for AAPL by default
-        #self.grid.SetCellValue(0, 0, "AAPL")
         thread.start_new_thread(self.QuoteHandler,('AAPL',0))
        
     def OnAdd(self,event): 
