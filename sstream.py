@@ -63,8 +63,8 @@ class SStream(wx.Frame):
         main_sizer.Add(grid_sizer, 1, wx.ALL, 5)   
         self.panel.SetSizer(main_sizer)
         
-        # display date/time and then start a thread to handle updates
-        thread.start_new_thread(self.UpdateDateTime,())
+        # start a thread to handle date/time updates
+        thread.start_new_thread(self.DateTimeHandler,())
         
         # start getting quotes for AAPL by default
         thread.start_new_thread(self.QuoteHandler,('AAPL',0))
@@ -93,20 +93,28 @@ class SStream(wx.Frame):
             # determine cell colors
             quote_color = set_cell_color(float(quote),float(prev_quote))[0]
             net_change_color = set_cell_color(float(stock_data['change']),0.0)[0]
-            # update the grid
-            self.grid.SetCellValue(row,1,quote)
-            self.grid.SetCellBackgroundColour(row,1,quote_color)
-            self.grid.SetCellValue(row,2,stock_data['change'])
-            self.grid.SetCellBackgroundColour(row,2,net_change_color)
-            self.grid.SetCellValue(row,5,stock_data['volume'])
-            self.grid.SetCellValue(row,7,str(prev_close))
-            # wait
+            self.UpdateStockDataDisplay(row,\
+                                        quote,\
+                                        quote_color,\
+                                        stock_data['change'],\
+                                        net_change_color,\
+                                        stock_data['volume'],\
+                                        str(prev_close))
+            # wait 3 seconds
             time.sleep(1)
             self.grid.SetCellBackgroundColour(row,1,"White")
             self.grid.ForceRefresh()
             time.sleep(2)
     
-    def UpdateDateTime(self):
+    def UpdateStockDataDisplay(self,row,quote,quote_color,change,change_color,volume,prev):
+        self.grid.SetCellValue(row,1,quote)
+        self.grid.SetCellBackgroundColour(row,1,quote_color)
+        self.grid.SetCellValue(row,2,change)
+        self.grid.SetCellBackgroundColour(row,2,change_color)
+        self.grid.SetCellValue(row,5,volume)
+        self.grid.SetCellValue(row,7,prev)
+    
+    def DateTimeHandler(self):
         format_time = lambda x, c: (x < 10 and (c + str(x), True)) or (str(x), False)
         while 1:
            # set time values
@@ -116,10 +124,17 @@ class SStream(wx.Frame):
            str_second = format_time(now.second,'0')[0]
            am_pm = ((now.hour >= 12 and ('PM',True)) or ('AM',False))[0]
            # update the date and time
-           self.time_display.SetValue(str_hour + ':' + str_minute + ':' + str_second + ' ' + am_pm)
-           self.date_display.SetValue(str(datetime.date.today()))
+           self.UpdateDateTimeDisplay(str_hour,\
+                                      str_minute,\
+                                      str_second,\
+                                      am_pm,\
+                                      str(datetime.date.today()))
            # wait   
            time.sleep(1)       
+    
+    def UpdateDateTimeDisplay(self,hour,minute,second,am_pm,date):
+         self.time_display.SetValue(hour + ':' + minute + ':' + second + ':' + am_pm)
+         self.date_display.SetValue(date)
     
     def ChartHistoricPrices(self, event):
         pass
