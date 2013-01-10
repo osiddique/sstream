@@ -83,31 +83,23 @@ class SStream(wx.Frame):
         self.grid.SetCellValue(row, 0, symbol)
         # get initial price
         quote = float(ystockquote.get_price(symbol))
-        set_cell_color = lambda x,y,c: (x>y and (True,self.grid.SetCellBackgroundColour(row,c,"Green")))\
-                                       or (x<y and self.grid.SetCellBackgroundColour(row,c,"Red"))
+        set_cell_color = lambda x,y: (x>y and ("Green",True)) or (x<y and ("Red",True)) or (("White",False))
         while 1:
-            # set value for the last quote to get momentum
-            prev_quote = quote 
-
-            #get data
+            # get and set values
             stock_data = ystockquote.get_all(symbol)
-            
-            # write value of latest quote
+            prev_quote = quote 
             quote = stock_data['price']
-            self.grid.SetCellValue(row,1,quote)
-            set_cell_color(float(quote),float(prev_quote),1)
-            
-            # write value of net change
-            self.grid.SetCellValue(row,2,stock_data['change'])
-            set_cell_color(float(stock_data['change']),0.0,2)
-            
-            # write value of volume
-            self.grid.SetCellValue(row,5,stock_data['volume'])
-            
-            # write prev close
             prev_close = float(quote) - float(stock_data['change'])
+            # determine cell colors
+            quote_color = set_cell_color(float(quote),float(prev_quote))[0]
+            net_change_color = set_cell_color(float(stock_data['change']),0.0)[0]
+            # update the grid
+            self.grid.SetCellValue(row,1,quote)
+            self.grid.SetCellBackgroundColour(row,1,quote_color)
+            self.grid.SetCellValue(row,2,stock_data['change'])
+            self.grid.SetCellBackgroundColour(row,2,net_change_color)
+            self.grid.SetCellValue(row,5,stock_data['volume'])
             self.grid.SetCellValue(row,7,str(prev_close))
-            
             # wait
             time.sleep(1)
             self.grid.SetCellBackgroundColour(row,1,"White")
@@ -115,9 +107,10 @@ class SStream(wx.Frame):
             time.sleep(2)
     
     def UpdateDateTime(self):
+        format_time = lambda x, c: (x < 10 and (c + str(x), True)) or (str(x), False)
         while 1:
+           # set time values
            now = datetime.datetime.now()
-           format_time = lambda x, c: (x < 10 and (c + str(x), True)) or (str(x), False)
            str_hour = format_time(now.hour,' ')[0]
            str_minute = format_time(now.minute,'0')[0]
            str_second = format_time(now.second,'0')[0]
@@ -125,7 +118,7 @@ class SStream(wx.Frame):
            # update the date and time
            self.time_display.SetValue(str_hour + ':' + str_minute + ':' + str_second + ' ' + am_pm)
            self.date_display.SetValue(str(datetime.date.today()))
-           # wait       
+           # wait   
            time.sleep(1)       
     
     def ChartHistoricPrices(self, event):
