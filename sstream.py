@@ -4,13 +4,8 @@ import time
 import datetime
 import thread
 import ystockquote
-
-#import matplotlib
-#matplotlib.use('WXAgg')
-#from matplotlib.figure import Figure
-#from matplotlib.backends.backend_wxagg import \
-#    FigureCanvasWxAgg as FigCanvas, \
-#    NavigationToolbar2WxAgg as NavigationToolbar
+import chart_prices
+import matplotlib.pyplot as plt
 
 class SStream(wx.Frame):   
     def __init__(self):
@@ -64,7 +59,7 @@ class SStream(wx.Frame):
         self.panel.SetSizer(main_sizer)
         
         # start a thread to handle date/time updates
-        thread.start_new_thread(self.DateTimeHandler,())
+        #thread.start_new_thread(self.DateTimeHandler,())
         
         # start getting quotes for AAPL by default
         thread.start_new_thread(self.QuoteHandler,('AAPL',0))
@@ -137,22 +132,17 @@ class SStream(wx.Frame):
          self.date_display.SetValue(date)
     
     def ChartHistoricPrices(self, event):
-        pass
-        #if event.GetCol() == 0:
-            #thread.start_new_thread(self.PlotData,())
-        #self.txt_box.SetFocus()
+         if event.GetCol() == 0:
+            print 'hi'
+            if plt.fignum_exists(1):
+               wx.MessageBox('Only one plot at a time!', 'Warning', wx.OK|wx.ICON_INFORMATION)
+            else:
+              symbol = self.grid.GetCellValue(event.GetRow(),0) 
+              chart_prices.ChartPrice(symbol)
+         self.txt_box.SetFocus()
  
-    def PlotData(self):
-        pass
-        #matplotlib.interactive( True )
-        #matplotlib.use( 'WXAgg' )
-        #plt.plot([1,2,3,4])
-        #plt.ylabel('some numbers')
-        #plt.title('AAPL')
-        #plt.show()
-                    
 if __name__ == '__main__':
-    app = wx.PySimpleApp()
+    app = wx.App()
     frame = SStream()
     frame.Show()
     app.MainLoop()
