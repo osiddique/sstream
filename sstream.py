@@ -59,7 +59,7 @@ class SStream(wx.Frame):
         self.panel.SetSizer(main_sizer)
         
         # start a thread to handle date/time updates
-        #thread.start_new_thread(self.DateTimeHandler,())
+        thread.start_new_thread(self.DateTimeHandler,())
         
         # start getting quotes for AAPL by default
         thread.start_new_thread(self.QuoteHandler,('AAPL',0))
