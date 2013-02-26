@@ -47,3 +47,4 @@ def GetStockData(symbol):
     url = 'http://finance.google.com/finance/info?q=%s' % symbol
     lines = urllib2.urlopen(url).read().splitlines()
     return json.loads(''.join([x for x in lines if x not in ('// [', ']')]))
+

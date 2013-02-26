@@ -117,3 +117,4 @@ class SStream(wx.App):
 if __name__ == '__main__':
     app = SStream(0)
     app.MainLoop()
+

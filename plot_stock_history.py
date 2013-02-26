@@ -25,3 +25,4 @@ def PlotClosingPrices(symbol):
    
 def PlotCurrentlyDisplayed():
     return plt.fignum_exists(1)
+
