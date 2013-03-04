@@ -28,7 +28,7 @@ class MainFrame(wx.Frame):
         self.newest_row = 1
         self.grid = wx.grid.Grid(self.panel)
         self.grid.CreateGrid(self.newest_row,9)
-        self.grid.SetColLabelValue(0, "Symbol")
+        self.grid.SetColLabelValue(0, "Ticker")
         self.grid.SetColLabelValue(1, "Last")
         self.grid.SetColLabelValue(2, "Net Chg")
         self.grid.SetColLabelValue(3, "Exchange")
